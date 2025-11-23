@@ -4,8 +4,8 @@
 
 ## 概要
 
-1. プロジェクトPULL
-    pull https://infrastructure-tf-inst-190516636370-git.asia-northeast1.sourcemanager.dev/infrastructure-tf-479108/rt-environment.git
+1. プロジェクトCLONE
+    clone https://infrastructure-tf-inst-190516636370-git.asia-northeast1.sourcemanager.dev/infrastructure-tf-479108/rt-environment.git
 2. パッケージインストール
     .\installPackage.bat
 3. レジストリ設定
@@ -24,3 +24,11 @@
     50.GCloud\01.initGcloud.bat
 2. プロジェクト・インスタンス作成・リポジトリ作成・リポジトリPUSH
     50.GCloud\02.createRepository.bat
+
+
+## トラブルシューティング
+1. Tortoise-Gitのオペレーションでエラーが出る場合。
+    1. gitの所有者不整合をパッチ
+        git config --global --add safe.directory "{プロジェクトディレクトリのフルパス}/.git"
+    2. ディレクトリの所有者を設定する
+        icacls "{プロジェクトディレクトリのフルパス}" /setowner "%USERNAME%" /T
