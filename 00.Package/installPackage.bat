@@ -12,6 +12,8 @@ winget install --id Git.Git -e --source winget
 rem Tortoise-Gitインストール
 winget install --id TortoiseGit.TortoiseGit -e --source winget
 
+rem Google Cloud CLI インストール
+ winget install --id Google.CloudSDK
 
 
 rem ########################################################
