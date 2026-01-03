@@ -53,7 +53,6 @@ git config --system --unset credential.helper
 git config --global credential."https://infrastructure-tf-inst-190516636370-git.asia-northeast1.sourcemanager.dev".helper gcloud.cmd
 
 rem 念のため再認証
-gcloud auth login
 gcloud auth list
 
 
