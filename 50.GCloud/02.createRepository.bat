@@ -50,6 +50,8 @@ gcloud beta source-manager repos list ^
 rem 認証クライアントを、windows標準からgcpに切り替え
 git config --global --unset credential.helper
 git config --system --unset credential.helper
+git config --global credential.helper gcloud.cmd
+git config --local credential.helper gcloud.cmd
 git config --global credential."https://infrastructure-tf-inst-190516636370-git.asia-northeast1.sourcemanager.dev".helper gcloud.cmd
 
 rem 念のため再認証
