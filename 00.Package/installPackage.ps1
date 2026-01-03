@@ -1,6 +1,37 @@
-#Requires -RunAsAdministrator
+﻿# Requires -RunAsAdministrator
+# --- PowerShell 実行ポリシーをこのプロセスだけ Bypass ---
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+# Set console and output encoding to UTF-8 to prevent garbled characters
+cmd /c chcp 65001 > $null
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+
+# --- 管理者権限チェック ---
+$IsAdmin = ([Security.Principal.WindowsPrincipal] `
+    [Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $IsAdmin) {
+    Write-Host "管理者権限で再実行します...xxxxx"
+
+    # 自分自身のスクリプトパスを取得
+    $script = $PSCommandPath
+
+    # PowerShell Core (pwsh) が利用可能かチェック
+    $psCommand = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
+
+    # 管理者権限で自分自身を再実行（実行ポリシーを設定してからスクリプトを実行）
+    Start-Process $psCommand -Verb RunAs -ArgumentList "-Command `"Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & '$script'`""
+
+    # 現在のプロセスは終了  
+    exit
+}
+Read-Host "管理者権限で実行されています..."
 
 Read-Host "Push Enter to start package installation..."
+
+
 
 # PowerShell script to install packages and set PATH
 # Install Git
@@ -25,8 +56,6 @@ function Join-PathCustom {
         [string]$newPaths
     )
 
-    Out-
-
     $paths = $existingPath -split ';'
     $newPathList = $newPaths -split ';'
 
@@ -41,35 +70,67 @@ function Join-PathCustom {
     return $paths -join ';'
 }
 
-# Check Git installation path
-$gitPath = ""
-if (Test-Path "C:\Program Files\Git\cmd") {
-    $gitPath = "C:\Program Files\Git\cmd"
-} elseif (Test-Path "C:\Program Files\Git\bin") {
-    $gitPath = "C:\Program Files\Git\bin"
+
+#############################################
+# Main Routine
+#############################################
+try {
+    # Check Git installation path
+    Write-Host "Checking Git installation path...";
+    $gitPath = "";
+    if (Test-Path "C:\Program Files\Git\cmd") {
+        $gitPath = "C:\Program Files\Git\cmd";
+    } elseif (Test-Path "C:\Program Files\Git\bin") {
+        $gitPath = "C:\Program Files\Git\bin";
+    }
+
+    # Check 7-Zip installation path
+    Write-Host "Checking 7-Zip installation path...";
+    $sevenZipPath = "";
+    if (Test-Path "C:\Program Files\7-Zip") {
+        $sevenZipPath = "C:\Program Files\7-Zip";
+    }
+
+    # Check GCloud installation path
+    Write-Host "Checking GCloud installation path...";
+    $gcloudPath = ""
+    if (Test-Path "C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin") {
+        $gcloudPath = "C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin";
+    }
+
+    # Add Git path if found
+    Write-Host "Adding Git path...";
+    if ($gitPath) {
+        $currentPath = Join-PathCustom -existingPath $currentPath -newPaths $gitPath
+    }
+
+    # Add 7-Zip path if found
+    Write-Host "Adding 7-Zip path..."
+    if ($sevenZipPath) {
+        $currentPath = Join-PathCustom -existingPath $currentPath -newPaths $sevenZipPath
+    }
+
+    # Add GCloud path if found
+    Write-Host "Adding GCloud path..."
+    if ($gcloudPath) {
+        $currentPath = Join-PathCustom -existingPath $currentPath -newPaths $gcloudPath
+    }
+
+    # Clean up semicolons
+    Write-Host "Trimming semi-colons..."
+    $currentPath = $currentPath.TrimStart(';').TrimEnd(';')
+
+    # Set new PATH
+    Write-Host "Updating PATH..."
+    Write-Host "Old PATH: $([Environment]::GetEnvironmentVariable("PATH", "Machine"))"
+    Write-Host "New PATH: $currentPath"
+    [Environment]::SetEnvironmentVariable("PATH", $currentPath, "Machine")
+
+} catch {
+    Write-Host "Error occurred: $_"
+    Read-Host "Push Enter to exit..."
+    exit 1
 }
-
-# Check 7-Zip installation path
-$sevenZipPath = ""
-if (Test-Path "C:\Program Files\7-Zip") {
-    $sevenZipPath = "C:\Program Files\7-Zip"
-}
-
-# Add Git path if found
-if ($gitPath) {
-    $currentPath = Join-PathCustom -existingPath $currentPath -newPaths $gitPath
-}
-
-# Add 7-Zip path if found
-if ($sevenZipPath) {
-    $currentPath = Join-PathCustom -existingPath $currentPath -newPaths $sevenZipPath
-}
-
-# Clean up semicolons
-$currentPath = $currentPath.TrimStart(';').TrimEnd(';')
-
-# Set new PATH
-[Environment]::SetEnvironmentVariable("PATH", $currentPath, "Machine")
 
 Write-Host "Installation and PATH setup completed."
 Read-Host "Push Enter to exit..."
